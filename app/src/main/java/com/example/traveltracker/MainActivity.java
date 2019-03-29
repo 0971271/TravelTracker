@@ -10,7 +10,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
 
+import android.content.Intent;
+
 public class MainActivity extends AppCompatActivity {
+    private final String IMAGE_CAPTURE = "android.media.action.IMAGE_CAPTURE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,7 +44,8 @@ public class MainActivity extends AppCompatActivity {
                             selectedFragment = new TravelsFragment();
                             break;
                         case R.id.nav_camera:
-                            // selectedFragment = new CameraFragment();
+                            Intent intent = new Intent(IMAGE_CAPTURE);
+                            startActivity(intent);
                             return false;
                         case R.id.nav_profile:
                             selectedFragment = new ProfileFragment();
