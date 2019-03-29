@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
                         case R.id.nav_camera:
                             Intent intent = new Intent(IMAGE_CAPTURE);
                             startActivity(intent);
+                            // false so camera doesn't get highlighted
                             return false;
                         case R.id.nav_profile:
                             selectedFragment = new ProfileFragment();
