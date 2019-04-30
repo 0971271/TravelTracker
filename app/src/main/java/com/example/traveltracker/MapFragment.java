@@ -12,6 +12,8 @@ import android.view.ViewGroup;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final String TAG = "MapFragment";
@@ -25,10 +27,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        Log.d(TAG, "onActivityCreated");
 
         if (getActivity() != null) {
-            SupportMapFragment mapFragment = (SupportMapFragment) getActivity()
-                    .getSupportFragmentManager()
+            // https://stackoverflow.com/a/26598640
+            final SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                     .findFragmentById(R.id.map);
 
             if (mapFragment != null) {
@@ -39,8 +42,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
+        Log.d(TAG, "onMapReady");
         this.googleMap = googleMap;
 
+        this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                addMarker(latLng);
+            }
+        });
+    }
+
+    private void addMarker(LatLng position) {
+        Log.d(TAG, String.format("Marker added at: %f %f", position.latitude, position.longitude));
+        googleMap.addMarker(new MarkerOptions().position(position));
     }
 
 }
