@@ -31,7 +31,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         if (getActivity() != null) {
             // https://stackoverflow.com/a/26598640
-            final SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
+            SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
                     .findFragmentById(R.id.map);
 
             if (mapFragment != null) {
