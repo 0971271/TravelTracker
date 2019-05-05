@@ -26,11 +26,13 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
+    private final String TAG = "MapFragment";
+
+    private final static int PERMISSION_ACCESS_FINE_LOCATION = 1;
     private final static int LOCATION_UPDATE_MIN_DISTANCE = 10;
     private final static int LOCATION_UPDATE_MIN_TIME = 5000;
     private final static int DEFAULT_ZOOM = 12;
 
-    private final String TAG = "MapFragment";
     private GoogleMap googleMap;
     private LocationManager locationManager;
     private LocationListener locationListener = new LocationListener() {
@@ -128,13 +130,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, DEFAULT_ZOOM));
             }
-            else {
-                Log.d(TAG, "current location null");
-            }
         }
         else {
             ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
         }
     }
 }
