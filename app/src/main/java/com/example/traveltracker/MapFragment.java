@@ -41,6 +41,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
+    // TODO: there should be a 'are you sure?' warning
     @Override
     public void onMapReady(GoogleMap googleMap) {
         Log.d(TAG, "onMapReady");
@@ -53,36 +54,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
-        //Setting click event handler for InfoWindow
         googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                // Remove the marker
                 marker.remove();
             }
         });
     }
 
-    //private void addMarker(LatLng position) {
-
-    //Log.d(TAG, String.format("Marker added at: %f %f", position.latitude, position.longitude));
-    //googleMap.addMarker(new MarkerOptions().position(position));
-    //}
-    //http://wptrafficanalyzer.in/blog/remove-a-single-marker-from-google-maps-android-api-v2-on-clicking-infowindow/
     private void addMarker(LatLng point){
-        // Creating an instance of MarkerOptions
         MarkerOptions markerOptions = new MarkerOptions();
+            .position(position);
+            .snippet("Tap here to remove this marker");
+            .title("Marker Instance");
 
-        // Setting latitude and longitude for the marker
-        markerOptions.position(point);
-
-        // Setting snippet for the InfoWindow
-        markerOptions.snippet("Tap here to remove this marker");
-
-        // Setting title for the InfoWindow
-        markerOptions.title("Marker Instance");
-
-        // Adding marker on the Google Map
         googleMap.addMarker(markerOptions);
     }
 }
