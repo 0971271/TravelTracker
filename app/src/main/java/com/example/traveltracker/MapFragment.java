@@ -28,10 +28,10 @@ import com.google.android.gms.maps.model.MarkerOptions;
 public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final String TAG = "MapFragment";
 
-    private final static int PERMISSION_ACCESS_FINE_LOCATION = 1;
-    private final static int LOCATION_UPDATE_MIN_DISTANCE = 10;
-    private final static int LOCATION_UPDATE_MIN_TIME = 5000;
-    private final static int DEFAULT_ZOOM = 12;
+    private final int PERMISSION_ACCESS_FINE_LOCATION = 1;
+    private final int LOCATION_UPDATE_MIN_DISTANCE = 10;
+    private final int LOCATION_UPDATE_MIN_TIME = 5000;
+    private final int DEFAULT_ZOOM = 12;
 
     private GoogleMap googleMap;
     private LocationManager locationManager;
