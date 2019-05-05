@@ -64,8 +64,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private void addMarker(LatLng position) {
         MarkerOptions markerOptions = new MarkerOptions()
-            .position(position);
-            .snippet("Tap here to remove this marker");
+            .position(position)
+            .snippet("Tap here to remove this marker")
             .title("Marker Instance");
 
         googleMap.addMarker(markerOptions);
