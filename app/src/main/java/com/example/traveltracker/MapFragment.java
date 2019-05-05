@@ -41,7 +41,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
     }
 
-    // TODO: there should be a 'are you sure?' warning
     @Override
     public void onMapReady(GoogleMap googleMap) {
         Log.d(TAG, "onMapReady");
@@ -55,6 +54,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         });
 
         googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            // TODO: there should be a 'are you sure?' warning
             @Override
             public void onInfoWindowClick(Marker marker) {
                 marker.remove();
