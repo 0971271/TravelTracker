@@ -1,7 +1,6 @@
 package com.example.traveltracker;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -46,13 +45,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng position) {
-                addMarker(position);
+                placeMarker(position);
             }
         });
     }
 
-    private void addMarker(LatLng position) {
-        Log.d(TAG, String.format("Marker added at: %f %f", position.latitude, position.longitude));
+    /**
+     * Places a marker at the given position.
+     *
+     * @param position
+     */
+    private void placeMarker(LatLng position) {
+        Log.d(TAG, String.format("Marker placed at: %f, %f", position.latitude, position.longitude));
         googleMap.addMarker(new MarkerOptions().position(position));
     }
 
