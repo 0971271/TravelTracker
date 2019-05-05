@@ -29,14 +29,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         super.onActivityCreated(savedInstanceState);
         Log.d(TAG, "onActivityCreated");
 
-        if (getActivity() != null) {
-            // https://stackoverflow.com/a/26598640
-            SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
-                    .findFragmentById(R.id.map);
+        // https://stackoverflow.com/a/26598640
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
+                .findFragmentById(R.id.map);
 
-            if (mapFragment != null) {
-                mapFragment.getMapAsync(this);
-            }
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
         }
     }
 
@@ -47,8 +45,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
-                addMarker(latLng);
+            public void onMapClick(LatLng position) {
+                addMarker(position);
             }
         });
     }
