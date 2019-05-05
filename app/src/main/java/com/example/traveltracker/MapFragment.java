@@ -13,6 +13,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
@@ -20,7 +21,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private GoogleMap googleMap;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         return inflater.inflate(R.layout.map_fragment, container, false);
     }
 
@@ -51,11 +52,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
                 addMarker(latLng);
             }
         });
+
+        googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            // TODO: there should be a 'are you sure?' warning
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                marker.remove();
+            }
+        });
     }
 
     private void addMarker(LatLng position) {
-        Log.d(TAG, String.format("Marker added at: %f %f", position.latitude, position.longitude));
-        googleMap.addMarker(new MarkerOptions().position(position));
-    }
+        MarkerOptions markerOptions = new MarkerOptions()
+            .position(position);
+            .snippet("Tap here to remove this marker");
+            .title("Marker Instance");
 
+        googleMap.addMarker(markerOptions);
+    }
 }
