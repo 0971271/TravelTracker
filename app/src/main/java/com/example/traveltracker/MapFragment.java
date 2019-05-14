@@ -41,6 +41,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         @Override
         public void onLocationChanged(Location location) {
             Log.d(TAG, "LocationListener.onLocationChanged");
+            // we only need to get the current location once
             locationManager.removeUpdates(locationListener);
         }
 
@@ -148,7 +149,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private Location getCurrentLocation() {
         if (hasGpsPermission()) {
-            // TODO: GPS_PROVIDER shows incorrect location?
+            // GPS_PROVIDER shows incorrect location? Use NETWORK_PROVIDER for now
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                     LOCATION_UPDATE_MIN_TIME, LOCATION_UPDATE_MIN_DISTANCE, locationListener);
 
