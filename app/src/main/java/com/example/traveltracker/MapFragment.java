@@ -1,6 +1,7 @@
 package com.example.traveltracker;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -29,16 +30,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final String TAG = "MapFragment";
 
     private final int PERMISSION_ACCESS_FINE_LOCATION = 1;
-    private final int LOCATION_UPDATE_MIN_DISTANCE = 10;
-    private final int LOCATION_UPDATE_MIN_TIME = 5000;
+    private final int LOCATION_UPDATE_MIN_DISTANCE = 0;
+    private final int LOCATION_UPDATE_MIN_TIME = 0;
     private final int DEFAULT_ZOOM = 12;
 
+    private Context context;
     private GoogleMap googleMap;
     private LocationManager locationManager;
     private LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
             Log.d(TAG, "LocationListener.onLocationChanged");
+            locationManager.removeUpdates(locationListener);
         }
 
         @Override
@@ -68,17 +71,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         super.onActivityCreated(savedInstanceState);
         Log.d(TAG, "onActivityCreated");
 
-        if (getActivity() != null) {
-            // https://stackoverflow.com/a/26598640
-            SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
-                    .findFragmentById(R.id.map);
+        // https://stackoverflow.com/a/26598640
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
+                .findFragmentById(R.id.map);
 
-            locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-            if (mapFragment != null) {
-                mapFragment.getMapAsync(this);
-            }
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
         }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.context = context;
     }
 
     @Override
@@ -101,7 +108,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             }
         });
 
-        showCurrentLocation();
+        if (hasGpsPermission()) {
+            showCurrentLocation();
+        }
+        else {
+            askGpsPermission();
+        }
     }
 
     private void addMarker(LatLng position) {
@@ -114,26 +126,37 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void showCurrentLocation() {
-        boolean gpsEnabled = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
+        Location currentLocation = getCurrentLocation();
+
+        if (currentLocation != null) {
+            LatLng position = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+            moveCamera(position);
+            addMarker(position);
+        }
+    }
+
+    private boolean hasGpsPermission() {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
-        Location location = null;
+    }
 
-        if (gpsEnabled) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                        LOCATION_UPDATE_MIN_TIME, LOCATION_UPDATE_MIN_TIME, locationListener);
+    private void askGpsPermission() {
+        ActivityCompat.requestPermissions((Activity) context,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
+    }
 
-            location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+    private Location getCurrentLocation() {
+        if (hasGpsPermission()) {
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                    LOCATION_UPDATE_MIN_TIME, LOCATION_UPDATE_MIN_DISTANCE, locationListener);
 
-            if (location != null) {
-                LatLng position = new LatLng(location.getLatitude(), location.getLongitude());
-                addMarker(position);
-
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, DEFAULT_ZOOM));
-            }
+            return locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         }
-        else {
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
-        }
+
+        return null;
+    }
+
+    private void moveCamera(LatLng position) {
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, DEFAULT_ZOOM));
     }
 }
