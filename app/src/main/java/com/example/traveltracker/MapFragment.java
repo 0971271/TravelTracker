@@ -112,6 +112,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             showCurrentLocation();
         }
         else {
+            // TODO: show current location after getting permission
             askGpsPermission();
         }
     }
@@ -147,6 +148,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private Location getCurrentLocation() {
         if (hasGpsPermission()) {
+            // TODO: GPS_PROVIDER shows incorrect location?
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                     LOCATION_UPDATE_MIN_TIME, LOCATION_UPDATE_MIN_DISTANCE, locationListener);
 
