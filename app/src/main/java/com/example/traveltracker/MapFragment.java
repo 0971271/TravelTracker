@@ -26,6 +26,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.List;
+
 public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final String TAG = "MapFragment";
 
@@ -35,6 +37,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final int DEFAULT_ZOOM = 12;
 
     private Context context;
+    private DBHelper dbHelper;
     private GoogleMap googleMap;
     private LocationManager locationManager;
     private LocationListener locationListener = new LocationListener() {
@@ -87,6 +90,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void onAttach(Context context) {
         super.onAttach(context);
         this.context = context;
+        dbHelper = new DBHelper(context);
     }
 
     @Override
@@ -96,8 +100,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
-                addMarker(latLng);
+            public void onMapClick(LatLng position) {
+                placeMarker(position);
+                addMarker(position);
             }
         });
 
@@ -106,6 +111,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void onInfoWindowClick(Marker marker) {
                 marker.remove();
+                boolean isDeleted = dbHelper.deleteMarker(marker.getPosition());
+
+                if (!isDeleted) {
+                    Log.d(TAG, "marker didn't get deleted from the database");
+                }
             }
         });
 
@@ -116,15 +126,21 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             // TODO: show current location after getting permission
             askGpsPermission();
         }
+
+        showSavedMarkers();
+    }
+
+    private void placeMarker(LatLng position) {
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(position)
+                .snippet("Tap here to remove this marker")
+                .title("Marker Instance");
+
+        googleMap.addMarker(markerOptions);
     }
 
     private void addMarker(LatLng position) {
-        MarkerOptions markerOptions = new MarkerOptions()
-            .position(position)
-            .snippet("Tap here to remove this marker")
-            .title("Marker Instance");
-
-        googleMap.addMarker(markerOptions);
+        dbHelper.addMarker(position.latitude, position.longitude);
     }
 
     private void showCurrentLocation() {
@@ -133,7 +149,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         if (currentLocation != null) {
             LatLng position = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
             moveCamera(position);
-            addMarker(position);
+            placeMarker(position);
         }
     }
 
@@ -161,5 +177,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private void moveCamera(LatLng position) {
         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, DEFAULT_ZOOM));
+    }
+
+    private void showSavedMarkers() {
+        List<LatLng> positions = dbHelper.getPositions();
+
+        if (positions.isEmpty()) {
+            return;
+        }
+
+        for (LatLng position : positions) {
+           placeMarker(position);
+        }
     }
 }
