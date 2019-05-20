@@ -81,7 +81,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return positions;
     }
 
-    // TODO: a markers should be found with it's id instead of it's position
+    // TODO: a marker should be found with it's id instead of it's position
     public boolean deleteMarker(LatLng position) {
         SQLiteDatabase db = getWritableDatabase();
         String selection = MarkerContract.MarkerEntries.COLUMN_LATITUDE + " = ? AND " +
