@@ -81,12 +81,12 @@ public class DBHelper extends SQLiteOpenHelper {
         return positions;
     }
 
-    // TODO: markers should be found with id instead of it's position
+    // TODO: a markers should be found with it's id instead of it's position
     public boolean deleteMarker(LatLng position) {
         SQLiteDatabase db = getWritableDatabase();
         String selection = MarkerContract.MarkerEntries.COLUMN_LATITUDE + " = ? AND " +
                 MarkerContract.MarkerEntries.COLUMN_LONGITUDE + " = ?";
-        String[] selectionArgs = { Double.toString(position.latitude), Double.toString(position.latitude) };
+        String[] selectionArgs = { Double.toString(position.latitude), Double.toString(position.longitude) };
         return db.delete(MarkerContract.MarkerEntries.TABLE_NAME, selection, selectionArgs) == 1;
     }
 }
