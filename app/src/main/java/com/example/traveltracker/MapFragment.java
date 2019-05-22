@@ -105,6 +105,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void addMarker(LatLng position) {
+
+        googleMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(getContext()));
+
         MarkerOptions markerOptions = new MarkerOptions()
             .position(position)
             .snippet("Tap here to remove this marker")
