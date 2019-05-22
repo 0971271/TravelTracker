@@ -130,14 +130,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         showSavedMarkers();
     }
 
-<<<<<<< HEAD
-    private void addMarker(LatLng position) {
-
-        googleMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(getContext()));
-
-=======
     private void placeMarker(LatLng position) {
->>>>>>> 3c100dbc68ea335154cf6716ae1f4a9abdd43179
+        googleMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(context));
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(position)
                 .snippet("Tap here to remove this marker")
@@ -169,7 +163,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         ActivityCompat.requestPermissions((Activity) context,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
     }
-
+    @SuppressWarnings({"MissingPermission"})
     private Location getCurrentLocation() {
         if (hasGpsPermission()) {
             // GPS_PROVIDER shows incorrect location? Use NETWORK_PROVIDER for now
@@ -194,7 +188,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
 
         for (LatLng position : positions) {
-           placeMarker(position);
+            placeMarker(position);
         }
     }
 }
