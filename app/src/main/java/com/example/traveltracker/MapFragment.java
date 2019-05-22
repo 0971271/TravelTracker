@@ -1,6 +1,7 @@
 package com.example.traveltracker;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -25,20 +26,26 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.List;
+
 public class MapFragment extends Fragment implements OnMapReadyCallback {
     private final String TAG = "MapFragment";
 
     private final int PERMISSION_ACCESS_FINE_LOCATION = 1;
-    private final int LOCATION_UPDATE_MIN_DISTANCE = 10;
-    private final int LOCATION_UPDATE_MIN_TIME = 5000;
+    private final int LOCATION_UPDATE_MIN_DISTANCE = 0;
+    private final int LOCATION_UPDATE_MIN_TIME = 0;
     private final int DEFAULT_ZOOM = 12;
 
+    private Context context;
+    private DBHelper dbHelper;
     private GoogleMap googleMap;
     private LocationManager locationManager;
     private LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
             Log.d(TAG, "LocationListener.onLocationChanged");
+            // we only need to get the current location once
+            locationManager.removeUpdates(locationListener);
         }
 
         @Override
@@ -68,17 +75,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         super.onActivityCreated(savedInstanceState);
         Log.d(TAG, "onActivityCreated");
 
-        if (getActivity() != null) {
-            // https://stackoverflow.com/a/26598640
-            SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
-                    .findFragmentById(R.id.map);
+        // https://stackoverflow.com/a/26598640
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager()
+                .findFragmentById(R.id.map);
 
-            locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-            if (mapFragment != null) {
-                mapFragment.getMapAsync(this);
-            }
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
         }
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.context = context;
+        dbHelper = new DBHelper(context);
     }
 
     @Override
@@ -88,8 +100,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
-            public void onMapClick(LatLng latLng) {
-                addMarker(latLng);
+            public void onMapClick(LatLng position) {
+                placeMarker(position);
+                addMarker(position);
             }
         });
 
@@ -98,42 +111,83 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             @Override
             public void onInfoWindowClick(Marker marker) {
                 marker.remove();
+                boolean isDeleted = dbHelper.deleteMarker(marker.getPosition());
+
+                if (!isDeleted) {
+                    Log.d(TAG, "marker didn't get deleted from the database");
+                }
             }
         });
 
-        showCurrentLocation();
+        if (hasGpsPermission()) {
+            showCurrentLocation();
+        }
+        else {
+            // TODO: show current location after getting permission
+            askGpsPermission();
+        }
+
+        showSavedMarkers();
     }
 
-    private void addMarker(LatLng position) {
+    private void placeMarker(LatLng position) {
         MarkerOptions markerOptions = new MarkerOptions()
-            .position(position)
-            .snippet("Tap here to remove this marker")
-            .title("Marker Instance");
+                .position(position)
+                .snippet("Tap here to remove this marker")
+                .title("Marker Instance");
 
         googleMap.addMarker(markerOptions);
     }
 
+    private void addMarker(LatLng position) {
+        dbHelper.addMarker(position.latitude, position.longitude);
+    }
+
     private void showCurrentLocation() {
-        boolean gpsEnabled = ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED;
-        Location location = null;
+        Location currentLocation = getCurrentLocation();
 
-        if (gpsEnabled) {
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                        LOCATION_UPDATE_MIN_TIME, LOCATION_UPDATE_MIN_TIME, locationListener);
-
-            location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-            if (location != null) {
-                LatLng position = new LatLng(location.getLatitude(), location.getLongitude());
-                addMarker(position);
-
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, DEFAULT_ZOOM));
-            }
+        if (currentLocation != null) {
+            LatLng position = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
+            moveCamera(position);
+            placeMarker(position);
         }
-        else {
-            ActivityCompat.requestPermissions(getActivity(),
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
+    }
+
+    private boolean hasGpsPermission() {
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void askGpsPermission() {
+        ActivityCompat.requestPermissions((Activity) context,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
+    }
+
+    private Location getCurrentLocation() {
+        if (hasGpsPermission()) {
+            // GPS_PROVIDER shows incorrect location? Use NETWORK_PROVIDER for now
+            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                    LOCATION_UPDATE_MIN_TIME, LOCATION_UPDATE_MIN_DISTANCE, locationListener);
+
+            return locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        }
+
+        return null;
+    }
+
+    private void moveCamera(LatLng position) {
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(position, DEFAULT_ZOOM));
+    }
+
+    private void showSavedMarkers() {
+        List<LatLng> positions = dbHelper.getPositions();
+
+        if (positions.isEmpty()) {
+            return;
+        }
+
+        for (LatLng position : positions) {
+           placeMarker(position);
         }
     }
 }
