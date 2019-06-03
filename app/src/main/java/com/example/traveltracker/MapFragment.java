@@ -128,7 +128,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         showSavedMarkers();
     }
 
-    private final Marker createMarker(@Nullable MarkerOptions markerOptions) {
+    private final Marker createMarker(MarkerOptions markerOptions) {
         return googleMap.addMarker(markerOptions);
     }
 
