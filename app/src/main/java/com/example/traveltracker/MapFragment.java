@@ -26,6 +26,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback {
@@ -40,30 +41,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private DBHelper dbHelper;
     private GoogleMap googleMap;
     private LocationManager locationManager;
-    private LocationListener locationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            Log.d(TAG, "LocationListener.onLocationChanged");
-            // we only need to get the current location once
-            locationManager.removeUpdates(locationListener);
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    };
-
+    private final List<MemoryMarker> memories = new ArrayList<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -101,8 +79,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng position) {
-                placeMarker(position);
-                addMarker(position);
+                MarkerOptions markerOptions = new MarkerOptions()
+                        .position(position)
+                        .snippet("Tap here to remove this marker")
+                        .title("Marker Instance");
+                Marker marker = createMarker(markerOptions);
+                MemoryMarker memory = new MemoryMarker(marker, memories.size() + 1);
+                memories.add(memory);
+                addMarker(memory.getLocation());
             }
         });
 
@@ -110,12 +94,26 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             // TODO: there should be a 'are you sure?' warning
             @Override
             public void onInfoWindowClick(Marker marker) {
-                marker.remove();
-                boolean isDeleted = dbHelper.deleteMarker(marker.getPosition());
+                Log.d(TAG, memories.size() + " saved memories");
 
-                if (!isDeleted) {
-                    Log.d(TAG, "marker didn't get deleted from the database");
+                if (memories.size() == 0) {
+                    return;
                 }
+
+                String clickId = marker.getId();
+
+                for (MemoryMarker memory : memories) {
+                    if (clickId.equals(memory.markerId())) {
+                        dbHelper.deleteMarker(memory.getId());
+                        // FIXME: marker stays on the map untill the map gets refreshed
+                        marker.remove();
+                        Log.d(TAG, "removed memory #" + memory.getId());
+                        memories.remove(memory);
+                        return;
+                    }
+                }
+
+                Log.d(TAG, "memory not found");
             }
         });
 
@@ -128,6 +126,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
 
         showSavedMarkers();
+    }
+
+    private final Marker createMarker(MarkerOptions markerOptions) {
+        return googleMap.addMarker(markerOptions);
     }
 
     private void placeMarker(LatLng position) {
@@ -160,11 +162,29 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
     private void askGpsPermission() {
         ActivityCompat.requestPermissions((Activity) context,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
+                new String[] { Manifest.permission.ACCESS_FINE_LOCATION }, PERMISSION_ACCESS_FINE_LOCATION);
     }
 
+    @SuppressWarnings({"MissingPermission"})
     private Location getCurrentLocation() {
         if (hasGpsPermission()) {
+            LocationListener locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    Log.d(TAG, "LocationListener.onLocationChanged");
+                    // we only need to get the current location once
+                    locationManager.removeUpdates(this);
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+                @Override
+                public void onProviderEnabled(String provider) {}
+
+                @Override
+                public void onProviderDisabled(String provider) {}
+            };
             // GPS_PROVIDER shows incorrect location? Use NETWORK_PROVIDER for now
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                     LOCATION_UPDATE_MIN_TIME, LOCATION_UPDATE_MIN_DISTANCE, locationListener);
@@ -180,14 +200,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void showSavedMarkers() {
-        List<LatLng> positions = dbHelper.getPositions();
+        List<List<Object>> markerContents = dbHelper.getMarkerContents();
 
-        if (positions.isEmpty()) {
+        if (markerContents.size() == 0) {
             return;
         }
 
-        for (LatLng position : positions) {
-           placeMarker(position);
+        for (List<Object> markerContent : markerContents) {
+            // 0: id    1: postion    2: title     3: snippet
+            Long id = (Long) markerContent.get(0);
+            LatLng position = (LatLng) markerContent.get(1);
+            String title = (String) markerContent.get(2);
+            String snippet = (String) markerContent.get(3);
+
+            title = title == null ? "Marker instance" : title;
+            snippet = snippet == null ? "Tap here to remove this marker." : snippet;
+
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(position)
+                    .snippet(snippet)
+                    .title(title);
+            Marker marker = createMarker(markerOptions);
+            MemoryMarker memory = new MemoryMarker(marker, id);
+            memories.add(memory);
+            placeMarker(memory.getLocation());
         }
     }
 }
