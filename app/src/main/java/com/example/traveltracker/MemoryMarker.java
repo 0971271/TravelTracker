@@ -41,7 +41,7 @@ public class MemoryMarker {
         return images;
     }
 
-    public void addImages(@NonNull String[] images) {
+    public void addImages(String[] images) {
         if (images.length == 0) {
             return;
         }
