@@ -109,12 +109,11 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.delete(MarkerContract.Entries.TABLE_NAME, selection, selectionArgs) == 1;
     }
 
-    public boolean addMemory(long memoryId, String imageName) {
+    public boolean addMemory(long markerId, String imageName) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put(MemoryContract.Entries.COLUMN_MARKER_ID, markerId);
         values.put(MemoryContract.Entries.COLUMN_IMAGE, imageName);
-        String selection = MemoryContract.Entries.COLUMN_MARKER_ID + " LIKE ?";
-        String[] selectionArgs = { Long.toString(memoryId) };
-        return db.update(MemoryContract.Entries.TABLE_NAME, values, selection, selectionArgs) == 1;
+        return db.insert(MemoryContract.Entries.TABLE_NAME, null, values) == 1;
     }
 }
