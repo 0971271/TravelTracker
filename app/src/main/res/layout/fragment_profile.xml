@@ -1,14 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent" android:layout_height="match_parent"
     android:background="@android:color/darker_gray">
 
+    <ImageView
+        android:id="@+id/Background"
+        android:layout_width="500dp"
+        android:layout_height="250dp"
+        android:contentDescription="@string/desc"
+        app:srcCompat="@drawable/desertyes" />
+
+    <ImageView
+        android:id="@+id/ProfilePicture"
+        android:layout_width="120dp"
+        android:layout_height="320dp"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="@string/desc"
+        app:srcCompat="@mipmap/ic_launcher" />
+
     <TextView
+        android:id="@+id/ProfileName"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Profile Page"
-        android:textSize="30sp"
-        android:layout_centerInParent="true"/>
+        android:layout_height="180dp"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:text="Tim van der Blaak"
+        android:textSize="30sp" />
+
+    <TextView
+        android:id="@+id/Age"
+        android:layout_width="171dp"
+        android:layout_height="117dp"
+        android:layout_alignEnd="@+id/ProfileName"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="38dp"
+        android:text="~My goal is to visited all the countries in the world!~"
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/Editname"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:layout_alignRight="@id/nameInput"
+        android:contentDescription="@string/desc"
+        android:text="Button" />
+
+    <EditText
+        android:id="@+id/nameInput"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:contentDescription="@string/desc"
+        android:ems="10"
+        android:hint="Name (Bob)"
+        android:inputType="textPersonName"
+        android:text="Name (Bob)" />
+
+    <EditText
+        android:id="@+id/bioInput"
+        android:layout_width="150dp"
+        android:layout_height="50dp"
+        android:layout_alignBottom="@id/nameInput"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="@string/desc"
+        android:ems="10"
+        android:hint="Bio"
+        android:inputType="textPersonName"
+        android:text="Bio" />
 
 
 </RelativeLayout>
