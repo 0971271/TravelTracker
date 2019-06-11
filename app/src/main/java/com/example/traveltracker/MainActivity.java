@@ -106,30 +106,26 @@ public class MainActivity extends AppCompatActivity {
 
         Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-        if (captureImage != null) {
-            try {
-                File image = createImage();
+        try {
+            File image = createImage();
 
-                if (image != null) {
-                    Uri imageUri = FileProvider.getUriForFile(this,
-                            getPackageName() + ".fileprovider", image);
+            if (image != null) {
+                Uri imageUri = FileProvider.getUriForFile(this,
+                        getPackageName() + ".fileprovider", image);
 
-                    captureImage.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
-                    startActivityForResult(captureImage, PERMISSION_CAMERA);
-                    Log.d(TAG, "created " + image.getName());
-                }
+                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                startActivityForResult(captureImage, PERMISSION_CAMERA);
+                Log.d(TAG, "created " + image.getName());
             }
-            catch (Exception e) {
-                Log.e(TAG, e.getMessage());
-            }
+        }
+        catch (Exception e) {
+            Log.e(TAG, e.getMessage());
         }
     }
 
     private File createImage() throws IOException {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String name = timestamp;
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(name, ".jpg", storageDir);
-        return image;
+        return File.createTempFile(timestamp, ".jpg", storageDir);
     }
 }
