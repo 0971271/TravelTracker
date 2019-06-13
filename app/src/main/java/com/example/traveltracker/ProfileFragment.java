@@ -12,25 +12,20 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 public class ProfileFragment extends Fragment {
-
-    String name;
-    String bio;
-
-    EditText nameInput;
-    EditText bioInput;
-
-    Button edit;
+    private String name;
+    private String bio;
+    private EditText nameInput;
+    private EditText bioInput;
+    private Button edit;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
-
-
         nameInput = (EditText) view.findViewById(R.id.nameInput);
         bioInput = (EditText) view.findViewById(R.id.bioInput);
-
         edit = (Button) view.findViewById(R.id.Editname);
+        
         edit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
