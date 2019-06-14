@@ -28,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
                     .commit();
         }
     }
-
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
             new BottomNavigationView.OnNavigationItemSelectedListener() {
                 @Override

@@ -2,7 +2,10 @@ package com.example.traveltracker;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.location.Location;
@@ -17,18 +20,24 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback {
+public class MapFragment extends Fragment implements OnMapReadyCallback{
     private final String TAG = "MapFragment";
 
     private final int PERMISSION_ACCESS_FINE_LOCATION = 1;
@@ -40,6 +49,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private DBHelper dbHelper;
     private GoogleMap googleMap;
     private LocationManager locationManager;
+    private MarkerInfoWindowAdapter markerinfoWindowAdapter;
     private LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
@@ -63,7 +73,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
 
         }
     };
-
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -98,26 +107,34 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         Log.d(TAG, "onMapReady");
         this.googleMap = googleMap;
 
-        this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+        markerinfoWindowAdapter = new MarkerInfoWindowAdapter(context);
+
+        // duration listener
+        this.googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
-            public void onMapClick(LatLng position) {
+            public void onMapLongClick(LatLng position) {
                 placeMarker(position);
                 addMarker(position);
             }
         });
 
+
+
         this.googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             // TODO: there should be a 'are you sure?' warning
             @Override
             public void onInfoWindowClick(Marker marker) {
-                marker.remove();
-                boolean isDeleted = dbHelper.deleteMarker(marker.getPosition());
+                //
+                InfoData infodata = (InfoData) marker.getTag();
 
-                if (!isDeleted) {
-                    Log.d(TAG, "marker didn't get deleted from the database");
-                }
+                //take input from user using popup after taking update inf object with newly entered value
+                marker.setTag(infodata);
+
+                openDialog(infodata, marker);
             }
         });
+
+
 
         if (hasGpsPermission()) {
             showCurrentLocation();
@@ -130,14 +147,90 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         showSavedMarkers();
     }
 
+    private void openDialog(InfoData infodataobject, final Marker markerinstance) {
+        final Dialog dialog = new Dialog(context);
+        dialog.setContentView(R.layout.layout_dialog);
+        dialog.setTitle("Title...");
+
+        // set the custom dialog components - text, image and button
+        final EditText edtTxtName = (EditText) dialog.findViewById(R.id.edtTxtName);
+        final EditText edtTxtStory = (EditText) dialog.findViewById(R.id.edtTxtStory);
+
+        InfoData infoData = (InfoData)markerinstance.getTag();
+        if(!infoData.Name.equals("<name>") && !infoData.Story.equals("<story>"))
+        {
+            edtTxtName.setText(infoData.Name);
+            edtTxtStory.setText(infoData.Story);
+        }
+
+        ImageView imageView = (ImageView) dialog.findViewById(R.id.current_picture);
+        imageView.setImageResource(R.drawable.lion);
+
+        ImageButton dialogButton = (ImageButton) dialog.findViewById(R.id.btnOne);
+        Button  btnSave = (Button) dialog.findViewById(R.id.btnSave);
+
+        // if button is clicked, close the custom dialog
+        dialogButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                //dialog.dismiss();
+                AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                alertDialog.setTitle("Alert");
+                alertDialog.setMessage("Are you sure to delete this marker ?");
+                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface alert_dialog, int which) {
+                                dbHelper.deleteMarker(markerinstance.getPosition());
+                                markerinstance.remove();
+                                alert_dialog.dismiss();
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface alert_dialog, int which) {
+                                alert_dialog.dismiss();
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.show();
+            }
+        });
+
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                InfoData infoData = new InfoData();
+                infoData.Name = edtTxtName.getText().toString();
+                infoData.Story = edtTxtStory.getText().toString();
+                markerinstance.setTag(infoData);
+                markerinfoWindowAdapter.updateInfoWindow(markerinstance);
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+
+    }
+
+
     private void placeMarker(LatLng position) {
-        googleMap.setInfoWindowAdapter(new CustomInfoWindowAdapter(context));
+
+        googleMap.setInfoWindowAdapter(markerinfoWindowAdapter);
+        googleMap.setOnMarkerClickListener(markerinfoWindowAdapter);
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(position)
-                .snippet("Tap here to remove this marker")
+                // This is for Custom Marker icon logo..
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.mapplaceholder))
+                .snippet("")
                 .title("Marker Instance");
 
-        googleMap.addMarker(markerOptions);
+        Marker MarkerInstance = googleMap.addMarker(markerOptions);
+        InfoData infoData = new InfoData();
+        infoData.Name = "<name>";
+        infoData.Story="<story>";
+        MarkerInstance.setTag(infoData);
     }
 
     private void addMarker(LatLng position) {
@@ -163,7 +256,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         ActivityCompat.requestPermissions((Activity) context,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
     }
+
     @SuppressWarnings({"MissingPermission"})
+
     private Location getCurrentLocation() {
         if (hasGpsPermission()) {
             // GPS_PROVIDER shows incorrect location? Use NETWORK_PROVIDER for now
@@ -191,4 +286,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             placeMarker(position);
         }
     }
+
+    /*@Override
+    public void applyTexts(String username, String password) {
+
+    }*/
 }
