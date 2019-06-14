@@ -6,9 +6,10 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:fontFamily="@font/open_sans_light"
         android:text="Travels Page"
-        android:textSize="30sp"
-        android:layout_centerInParent="true"/>
+        android:textSize="30sp" />
 
 
 </RelativeLayout>
