@@ -121,10 +121,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
 
         this.googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            // TODO: there should be a 'are you sure?' warning
+
             @Override
             public void onInfoWindowClick(Marker marker) {
-                //
                 InfoData infodata = (InfoData) marker.getTag();
 
                 //take input from user using popup after taking update inf object with newly entered value
@@ -157,7 +156,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         final EditText edtTxtStory = (EditText) dialog.findViewById(R.id.edtTxtStory);
 
         InfoData infoData = (InfoData)markerinstance.getTag();
-        if(!infoData.Name.equals("<name>") && !infoData.Story.equals("<story>"))
+        if(!infoData.Name.equals("Give a Title marker here!") && !infoData.Story.equals("Whats your story?"))
         {
             edtTxtName.setText(infoData.Name);
             edtTxtStory.setText(infoData.Story);
@@ -217,19 +216,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
     private void placeMarker(LatLng position) {
 
+
         googleMap.setInfoWindowAdapter(markerinfoWindowAdapter);
         googleMap.setOnMarkerClickListener(markerinfoWindowAdapter);
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(position)
                 // This is for Custom Marker icon logo..
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.mapplaceholder))
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons8))
                 .snippet("")
                 .title("Marker Instance");
 
         Marker MarkerInstance = googleMap.addMarker(markerOptions);
         InfoData infoData = new InfoData();
-        infoData.Name = "<name>";
-        infoData.Story="<story>";
+        infoData.Name = "Give a Title marker here!";
+        infoData.Story="Whats your story?";
         MarkerInstance.setTag(infoData);
     }
 

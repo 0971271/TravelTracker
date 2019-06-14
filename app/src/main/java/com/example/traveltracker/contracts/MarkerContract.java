@@ -17,9 +17,9 @@ public final class MarkerContract {
             "CREATE TABLE " + MarkerEntries.TABLE_NAME +
             " (" + MarkerEntries._ID + " INTEGER PRIMARY KEY," +
             MarkerEntries.COLUMN_LATITUDE + " REAL," +
-            MarkerEntries.COLUMN_LONGITUDE + " REAL)"+
-            MarkerEntries.COLUMN_NAME + " CHAR(50))"+
-            MarkerEntries.COLUMN_STORY + " CHAR(50))";
+            MarkerEntries.COLUMN_LONGITUDE + " REAL, "+
+            MarkerEntries.COLUMN_NAME + " TEXT, "+
+            MarkerEntries.COLUMN_STORY + " TEXT)";
 
 
     public final static String SQL_DELETE_ENTRIES =
