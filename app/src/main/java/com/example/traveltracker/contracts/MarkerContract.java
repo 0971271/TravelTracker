@@ -17,8 +17,8 @@ public final class MarkerContract {
             "CREATE TABLE " + MarkerEntries.TABLE_NAME +
             " (" + MarkerEntries._ID + " INTEGER PRIMARY KEY," +
             MarkerEntries.COLUMN_LATITUDE + " REAL," +
-            MarkerEntries.COLUMN_LONGITUDE + " REAL)"+
-            MarkerEntries.COLUMN_NAME + " CHAR(50))"+
+            MarkerEntries.COLUMN_LONGITUDE + " REAL,"+
+            MarkerEntries.COLUMN_NAME + " CHAR(50),"+
             MarkerEntries.COLUMN_STORY + " CHAR(50))";
 
 

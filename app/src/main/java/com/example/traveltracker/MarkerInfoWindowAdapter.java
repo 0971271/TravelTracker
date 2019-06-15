@@ -20,15 +20,14 @@ public class MarkerInfoWindowAdapter implements GoogleMap.InfoWindowAdapter, Goo
         window = LayoutInflater.from(context).inflate(R.layout.custom_info_window, null, false);
     }
 
-    public void updateInfoWindow(Marker m)
+    public void updateInfoWindow(Marker marker)
     {
-        EditText t1_Name = (EditText) window.findViewById(R.id.edtTxtName);
-        EditText t1_Story = (EditText) window.findViewById(R.id.edtTxtStory);
-        InfoData infoData = (InfoData) m.getTag();
-        t1_Name.setText(infoData.Name);
-        t1_Story.setText(infoData.Story);
-        m.hideInfoWindow();
-        m.showInfoWindow();
+        EditText t1_Name = (EditText) window.findViewById(R.id.editTitle);
+        EditText t1_Story = (EditText) window.findViewById(R.id.editSnippet);
+        t1_Name.setText(marker.getTitle());
+        t1_Story.setText(marker.getSnippet());
+        marker.hideInfoWindow();
+        marker.showInfoWindow();
     }
 
     @Override
@@ -38,22 +37,19 @@ public class MarkerInfoWindowAdapter implements GoogleMap.InfoWindowAdapter, Goo
 
     @Override
     public View getInfoContents(Marker marker) {
-        EditText t1_Name = (EditText) window.findViewById(R.id.edtTxtName);
-        EditText t1_Story = (EditText) window.findViewById(R.id.edtTxtStory);
-        InfoData infoData = (InfoData) marker.getTag();
-        t1_Name.setText(infoData.Name);
-        t1_Story.setText(infoData.Story);
-
+        EditText t1_Name = (EditText) window.findViewById(R.id.editTitle);
+        EditText t1_Story = (EditText) window.findViewById(R.id.editSnippet);
+        t1_Name.setText(marker.getTitle());
+        t1_Story.setText(marker.getSnippet());
         return window;
     }
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        EditText t1_Name = (EditText) window.findViewById(R.id.edtTxtName);
-        EditText t1_Story = (EditText) window.findViewById(R.id.edtTxtStory);
-        InfoData infodata = (InfoData) marker.getTag();
-        t1_Name.setText(infodata.Name);
-        t1_Story.setText(infodata.Story);
+        EditText t1_Name = (EditText) window.findViewById(R.id.editTitle);
+        EditText t1_Story = (EditText) window.findViewById(R.id.editSnippet);
+        t1_Name.setText(marker.getTitle());
+        t1_Story.setText(marker.getSnippet());
         marker.showInfoWindow();
         return true;
     }

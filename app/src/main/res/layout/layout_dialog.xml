@@ -64,13 +64,12 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:id="@+id/edtTxtName"
+            android:id="@+id/editTitle"
             android:focusableInTouchMode="true"
             android:gravity="center"
             android:layout_marginBottom="10dp"
             android:textColor="#000"
             android:layout_weight="0.2"
-            android:hint="Hi, please add name"
             android:background="@android:color/transparent"
             />
 
@@ -79,12 +78,11 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_marginBottom="10dp"
-            android:id="@+id/edtTxtStory"
+            android:id="@+id/editSnippet"
             android:focusableInTouchMode="true"
             android:layout_weight="0.6"
             android:gravity="center"
             android:textColor="#000"
-            android:hint="Would you mind sharing your story ?"
             android:background="@android:color/transparent"/>
 
 

@@ -25,7 +25,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
-
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -40,6 +39,11 @@ import java.util.List;
 public class MapFragment extends Fragment implements OnMapReadyCallback{
     private final String TAG = "MapFragment";
 
+    private final String DEFAULT_MARKER_TITLE = "Give a Title marker here!";
+    private final String DEFAULT_MARKER_SNIPPET = "Whats your story?";
+    private final String MARKER_TITLE_HINT = "Hi, please add your name.";
+    private final String MARKER_SNIPPET_HINT = "Would you mind sharing your story?";
+
     private final int PERMISSION_ACCESS_FINE_LOCATION = 1;
     private final int LOCATION_UPDATE_MIN_DISTANCE = 0;
     private final int LOCATION_UPDATE_MIN_TIME = 0;
@@ -49,7 +53,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
     private DBHelper dbHelper;
     private GoogleMap googleMap;
     private LocationManager locationManager;
-    private MarkerInfoWindowAdapter markerinfoWindowAdapter;
+    private MarkerInfoWindowAdapter markerInfoWindowAdapter;
+
     private LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
@@ -107,7 +112,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         Log.d(TAG, "onMapReady");
         this.googleMap = googleMap;
 
-        markerinfoWindowAdapter = new MarkerInfoWindowAdapter(context);
+        markerInfoWindowAdapter = new MarkerInfoWindowAdapter(context);
 
         // duration listener
         this.googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
@@ -121,20 +126,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
 
         this.googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            // TODO: there should be a 'are you sure?' warning
             @Override
             public void onInfoWindowClick(Marker marker) {
-                //
-                InfoData infodata = (InfoData) marker.getTag();
-
-                //take input from user using popup after taking update inf object with newly entered value
-                marker.setTag(infodata);
-
-                openDialog(infodata, marker);
+                openDialog(marker);
             }
         });
-
-
 
         if (hasGpsPermission()) {
             showCurrentLocation();
@@ -147,20 +143,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         showSavedMarkers();
     }
 
-    private void openDialog(InfoData infodataobject, final Marker markerinstance) {
+    private void openDialog(final Marker marker) {
         final Dialog dialog = new Dialog(context);
         dialog.setContentView(R.layout.layout_dialog);
         dialog.setTitle("Title...");
 
         // set the custom dialog components - text, image and button
-        final EditText edtTxtName = (EditText) dialog.findViewById(R.id.edtTxtName);
-        final EditText edtTxtStory = (EditText) dialog.findViewById(R.id.edtTxtStory);
+        final EditText editTitle = (EditText) dialog.findViewById(R.id.editTitle);
+        final EditText editSnippet = (EditText) dialog.findViewById(R.id.editSnippet);
 
-        InfoData infoData = (InfoData)markerinstance.getTag();
-        if(!infoData.Name.equals("<name>") && !infoData.Story.equals("<story>"))
+        editTitle.setHint(MARKER_TITLE_HINT);
+        editSnippet.setHint(MARKER_SNIPPET_HINT);
+
+        if(!marker.getTitle().equals(DEFAULT_MARKER_TITLE) && !marker.getSnippet().equals(DEFAULT_MARKER_SNIPPET))
         {
-            edtTxtName.setText(infoData.Name);
-            edtTxtStory.setText(infoData.Story);
+            editTitle.setText(marker.getTitle());
+            editSnippet.setText(marker.getSnippet());
         }
 
         ImageView imageView = (ImageView) dialog.findViewById(R.id.current_picture);
@@ -180,8 +178,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
                 alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface alert_dialog, int which) {
-                                dbHelper.deleteMarker(markerinstance.getPosition());
-                                markerinstance.remove();
+                                dbHelper.deleteMarker(marker.getPosition());
+                                marker.remove();
                                 alert_dialog.dismiss();
                                 dialog.dismiss();
                             }
@@ -200,37 +198,28 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                InfoData infoData = new InfoData();
-                infoData.Name = edtTxtName.getText().toString();
-                infoData.Story = edtTxtStory.getText().toString();
-                markerinstance.setTag(infoData);
-                markerinfoWindowAdapter.updateInfoWindow(markerinstance);
+                String name = editTitle.getText().toString();
+                String story = editSnippet.getText().toString();
+                marker.setTitle(name);
+                marker.setSnippet(story);
+                markerInfoWindowAdapter.updateInfoWindow(marker);
                 dialog.dismiss();
             }
         });
 
         dialog.show();
-
     }
 
-
     private void placeMarker(LatLng position) {
-
-        googleMap.setInfoWindowAdapter(markerinfoWindowAdapter);
-        googleMap.setOnMarkerClickListener(markerinfoWindowAdapter);
+        googleMap.setInfoWindowAdapter(markerInfoWindowAdapter);
+        googleMap.setOnMarkerClickListener(markerInfoWindowAdapter);
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(position)
-                // This is for Custom Marker icon logo..
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.mapplaceholder))
-                .snippet("")
-                .title("Marker Instance");
+                .title(DEFAULT_MARKER_TITLE)
+                .snippet(DEFAULT_MARKER_SNIPPET);
 
-        Marker MarkerInstance = googleMap.addMarker(markerOptions);
-        InfoData infoData = new InfoData();
-        infoData.Name = "<name>";
-        infoData.Story="<story>";
-        MarkerInstance.setTag(infoData);
+        Marker marker = googleMap.addMarker(markerOptions);
     }
 
     private void addMarker(LatLng position) {
@@ -258,7 +247,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
     }
 
     @SuppressWarnings({"MissingPermission"})
-
     private Location getCurrentLocation() {
         if (hasGpsPermission()) {
             // GPS_PROVIDER shows incorrect location? Use NETWORK_PROVIDER for now
@@ -286,9 +274,4 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
             placeMarker(position);
         }
     }
-
-    /*@Override
-    public void applyTexts(String username, String password) {
-
-    }*/
 }
