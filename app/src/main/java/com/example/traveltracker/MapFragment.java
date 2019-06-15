@@ -34,6 +34,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapFragment extends Fragment implements OnMapReadyCallback{
@@ -78,6 +79,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
         }
     };
+    private final List<MemoryMarker> memories = new ArrayList<>();
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -114,16 +116,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
         markerInfoWindowAdapter = new MarkerInfoWindowAdapter(context);
 
-        // duration listener
         this.googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng position) {
-                placeMarker(position);
+                createMarker(position);
                 addMarker(position);
+                Marker marker = createMarker(position);
+                MemoryMarker memory = new MemoryMarker(marker, memories.size() + 1);
+                memories.add(memory);
+                Log.d(TAG, "#memories" + memories.size());
             }
         });
-
-
 
         this.googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
@@ -140,13 +143,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
             askGpsPermission();
         }
 
+        googleMap.setInfoWindowAdapter(markerInfoWindowAdapter);
+        googleMap.setOnMarkerClickListener(markerInfoWindowAdapter);
         showSavedMarkers();
     }
 
     private void openDialog(final Marker marker) {
         final Dialog dialog = new Dialog(context);
+        final long memoryId = findMemoryId(marker);
         dialog.setContentView(R.layout.layout_dialog);
         dialog.setTitle("Title...");
+
+        Log.d(TAG, "open dialog for memory " + memoryId);
 
         // set the custom dialog components - text, image and button
         final EditText editTitle = (EditText) dialog.findViewById(R.id.editTitle);
@@ -177,7 +185,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
                 alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes",
                         new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface alert_dialog, int which) {
-                                dbHelper.deleteMarker(marker.getPosition());
+                                if (memoryId == -1) {
+                                    Log.d(TAG, "id " + memoryId + " doesn't belong to a memory");
+                                    return;
+                                }
+
+                                dbHelper.deleteMarker(memoryId);
                                 marker.remove();
                                 alert_dialog.dismiss();
                                 dialog.dismiss();
@@ -196,12 +209,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
                 String name = editTitle.getText().toString();
                 String story = editSnippet.getText().toString();
                 marker.setTitle(name);
                 marker.setSnippet(story);
-                markerInfoWindowAdapter.updateInfoWindow(marker);
+                if (memoryId != -1) {
+                    dbHelper.updateMarker(memoryId, name, story);
+                }
+
                 dialog.dismiss();
             }
         });
@@ -209,16 +225,32 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         dialog.show();
     }
 
-    private void placeMarker(LatLng position) {
-        googleMap.setInfoWindowAdapter(markerInfoWindowAdapter);
-        googleMap.setOnMarkerClickListener(markerInfoWindowAdapter);
+    private Marker createMarker(LatLng position) {
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(position)
                 .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons8))
                 .title(DEFAULT_MARKER_TITLE)
                 .snippet(DEFAULT_MARKER_SNIPPET);
 
-        Marker marker = googleMap.addMarker(markerOptions);
+        return googleMap.addMarker(markerOptions);
+    }
+
+    private Marker createMarker(MarkerResult markerResult) {
+        googleMap.setInfoWindowAdapter(markerInfoWindowAdapter);
+        googleMap.setOnMarkerClickListener(markerInfoWindowAdapter);
+        String title = markerResult.getTitle();
+        String snippet = markerResult.getSnippet();
+
+        title = title == null ? DEFAULT_MARKER_TITLE : title;
+        snippet = snippet == null ? DEFAULT_MARKER_SNIPPET :snippet;
+
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(markerResult.getLocation())
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons8))
+                .title(title)
+                .snippet(snippet);
+
+        return googleMap.addMarker(markerOptions);
     }
 
     private void addMarker(LatLng position) {
@@ -231,7 +263,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         if (currentLocation != null) {
             LatLng position = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
             moveCamera(position);
-            placeMarker(position);
+            createMarker(position);
         }
     }
 
@@ -242,12 +274,29 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
     private void askGpsPermission() {
         ActivityCompat.requestPermissions((Activity) context,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ACCESS_FINE_LOCATION);
+                new String[] { Manifest.permission.ACCESS_FINE_LOCATION }, PERMISSION_ACCESS_FINE_LOCATION);
     }
 
     @SuppressWarnings({"MissingPermission"})
     private Location getCurrentLocation() {
         if (hasGpsPermission()) {
+            LocationListener locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    Log.d(TAG, "LocationListener.onLocationChanged");
+                    // we only need to get the current location once
+                    locationManager.removeUpdates(this);
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+                @Override
+                public void onProviderEnabled(String provider) {}
+
+                @Override
+                public void onProviderDisabled(String provider) {}
+            };
             // GPS_PROVIDER shows incorrect location? Use NETWORK_PROVIDER for now
             locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
                     LOCATION_UPDATE_MIN_TIME, LOCATION_UPDATE_MIN_DISTANCE, locationListener);
@@ -263,14 +312,32 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
     }
 
     private void showSavedMarkers() {
-        List<LatLng> positions = dbHelper.getPositions();
+        List<MarkerResult> markerResults = dbHelper.getMarkers();
 
-        if (positions.isEmpty()) {
+        if (markerResults.size() == 0) {
             return;
         }
 
-        for (LatLng position : positions) {
-            placeMarker(position);
+        for (MarkerResult markerResult : markerResults) {
+            Marker marker = createMarker(markerResult);
+            MemoryMarker memoryMarker = new MemoryMarker(marker, memories.size() + 1);
+            memories.add(memoryMarker);
         }
+    }
+
+    // returns -1 if the given marker doesn't have a memory
+    private long findMemoryId(Marker marker) {
+        if (memories.size() == 0) {
+            Log.d(TAG, "memories.size() == 0");
+            return -1;
+        }
+
+        for (MemoryMarker memory : memories) {
+            if (memory.markerEquals(marker)) {
+                return memory.getId();
+            }
+        }
+
+        return -1;
     }
 }

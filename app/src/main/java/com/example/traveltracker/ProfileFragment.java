@@ -7,15 +7,38 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 public class ProfileFragment extends Fragment {
+    private String name;
+    private String bio;
+    private EditText nameInput;
+    private EditText bioInput;
+    private Button edit;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_profile, container, false);
+        View view = inflater.inflate(R.layout.fragment_profile, container, false);
+        nameInput = (EditText) view.findViewById(R.id.nameInput);
+        bioInput = (EditText) view.findViewById(R.id.bioInput);
+        edit = (Button) view.findViewById(R.id.Editname);
+        
+        edit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                name = nameInput.getText().toString();
+                bio = bioInput.getText().toString();
+                showToast(name);
+            }
+        });
 
+        return view;
+    }
 
-
+    private void showToast (String text){
+        Toast.makeText(getContext(), text, Toast.LENGTH_LONG).show();
     }
 }
