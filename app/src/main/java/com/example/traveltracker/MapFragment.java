@@ -155,8 +155,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         editTitle.setHint(MARKER_TITLE_HINT);
         editSnippet.setHint(MARKER_SNIPPET_HINT);
 
-        if(!marker.getTitle().equals(DEFAULT_MARKER_TITLE) && !marker.getSnippet().equals(DEFAULT_MARKER_SNIPPET))
-        {
+        if(!marker.getTitle().equals(DEFAULT_MARKER_TITLE) && !marker.getSnippet().equals(DEFAULT_MARKER_SNIPPET)) {
             editTitle.setText(marker.getTitle());
             editSnippet.setText(marker.getSnippet());
         }
@@ -215,7 +214,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         googleMap.setOnMarkerClickListener(markerInfoWindowAdapter);
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(position)
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.mapplaceholder))
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons8))
                 .title(DEFAULT_MARKER_TITLE)
                 .snippet(DEFAULT_MARKER_SNIPPET);
 
