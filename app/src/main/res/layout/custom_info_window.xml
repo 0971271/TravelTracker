@@ -11,7 +11,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="50"
-        android:src="@drawable/lion"/>
+        android:src="@drawable/lion"
+        android:id="@+id/info_window_image"/>
 
     <LinearLayout
         android:layout_width="match_parent"

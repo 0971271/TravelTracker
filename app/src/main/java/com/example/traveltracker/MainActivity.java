@@ -25,7 +25,10 @@ import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
-    private final int PERMISSION_CAMERA = 3;
+
+    public final int PERMISSION_CAMERA = 3;
+    public final int PERMISSION_READ_EXTERNAL_STORAGE = 4;
+    public final int PERMISSION_WRITE_EXTERNAL_STORAGE = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,15 +50,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        if (requestCode == PERMISSION_CAMERA) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
-                    && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                captureImage();
-            }
-        }
-    }
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
             new BottomNavigationView.OnNavigationItemSelectedListener() {
                 @Override
@@ -87,15 +81,38 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
 
-
-    private boolean hasCameraPermission() {
-        return ContextCompat.checkSelfPermission(this,
-                Manifest.permission.CAMERA) ==PackageManager.PERMISSION_GRANTED;
+    public boolean hasPermission(String permission) {
+        return ContextCompat.checkSelfPermission(this, permission)
+                == PackageManager.PERMISSION_GRANTED;
     }
 
-    private void askCameraPermission() {
+    public void askPermission(String permission, int requestCode) {
+        if (hasPermission(permission)) {
+            return;
+        }
+
         ActivityCompat.requestPermissions(this,
-                new String[] { Manifest.permission.CAMERA }, PERMISSION_CAMERA);
+                new String[] { permission }, requestCode);
+    }
+
+    public boolean hasCameraPermission() {
+        return hasPermission(Manifest.permission.CAMERA);
+    }
+
+    public boolean hasReadExternalStoragePermission() {
+        return hasPermission(Manifest.permission.READ_EXTERNAL_STORAGE);
+    }
+
+    public void askCameraPermission() {
+        askPermission(Manifest.permission.CAMERA, PERMISSION_CAMERA);
+    }
+
+    public void askReadExternalStoragePermission() {
+        askPermission(Manifest.permission.READ_EXTERNAL_STORAGE, PERMISSION_READ_EXTERNAL_STORAGE);
+    }
+
+    public void askWriteExternalStoragePermission() {
+        askPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, PERMISSION_WRITE_EXTERNAL_STORAGE);
     }
 
     private void captureImage() {
