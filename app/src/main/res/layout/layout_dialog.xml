@@ -24,7 +24,7 @@
             android:id="@+id/btnSave"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="0.3"
+            android:layout_weight="0.8"
             android:textAppearance="@android:style/TextAppearance.Small"
             android:text="Save" />
 
