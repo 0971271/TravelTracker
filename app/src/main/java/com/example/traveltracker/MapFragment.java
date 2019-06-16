@@ -6,16 +6,21 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,6 +29,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -50,11 +56,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
     private final int LOCATION_UPDATE_MIN_TIME = 0;
     private final int DEFAULT_ZOOM = 12;
 
+    private final int DIALOG_IMAGE_WIDTH = 500;
+    private final int DIALOG_IMAGE_HEIGTH = 500;
+
     private Context context;
     private DBHelper dbHelper;
     private GoogleMap googleMap;
     private LocationManager locationManager;
     private MarkerInfoWindowAdapter markerInfoWindowAdapter;
+    private MainActivity main;
+    private Uri selectedImageUri;
+    private ImageView dialogImage;
 
     private LocationListener locationListener = new LocationListener() {
         @Override
@@ -107,6 +119,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         super.onAttach(context);
         this.context = context;
         dbHelper = new DBHelper(context);
+        main = (MainActivity) context;
     }
 
     @Override
@@ -148,9 +161,27 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         showSavedMarkers();
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == main.PERMISSION_READ_EXTERNAL_STORAGE && resultCode == Activity.RESULT_OK) {
+            if (dialogImage == null) {
+                Log.e(TAG, "dialogImage == null");
+                return;
+            }
+
+            selectedImageUri = data.getData();
+            Log.d(TAG, "onActivityResult() select image: " + getImagePathFromUri(selectedImageUri));
+            dialogImage.setImageURI(selectedImageUri);
+            markerInfoWindowAdapter.setImageFromURI(selectedImageUri);
+        }
+    }
+
     private void openDialog(final Marker marker) {
         final Dialog dialog = new Dialog(context);
         final long memoryId = findMemoryId(marker);
+
         dialog.setContentView(R.layout.layout_dialog);
         dialog.setTitle("Title...");
 
@@ -159,6 +190,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         // set the custom dialog components - text, image and button
         final EditText editTitle = (EditText) dialog.findViewById(R.id.editTitle);
         final EditText editSnippet = (EditText) dialog.findViewById(R.id.editSnippet);
+        final ImageView imageView = (ImageView) dialog.findViewById(R.id.current_picture);
 
         editTitle.setHint(MARKER_TITLE_HINT);
         editSnippet.setHint(MARKER_SNIPPET_HINT);
@@ -168,9 +200,15 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
             editSnippet.setText(marker.getSnippet());
         }
 
-        ImageView imageView = (ImageView) dialog.findViewById(R.id.current_picture);
-        imageView.setImageResource(R.drawable.lion);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(DIALOG_IMAGE_WIDTH, DIALOG_IMAGE_HEIGTH);
+        imageView.setLayoutParams(params);
 
+        if (selectedImageUri == null) {
+            imageView.setImageResource(R.drawable.lion);
+        }
+        else {
+            imageView.setImageURI(selectedImageUri);
+        }
         ImageButton dialogButton = (ImageButton) dialog.findViewById(R.id.btnOne);
         Button  btnSave = (Button) dialog.findViewById(R.id.btnSave);
 
@@ -219,6 +257,22 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
                 }
 
                 dialog.dismiss();
+            }
+        });
+
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (main.hasReadExternalStoragePermission()) {
+                    dialogImage = imageView;
+                    Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    galleryIntent.setType("image/*");
+                    startActivityForResult(galleryIntent, main.PERMISSION_READ_EXTERNAL_STORAGE);
+                }
+                else {
+                    main.askReadExternalStoragePermission();
+                }
             }
         });
 
@@ -320,7 +374,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
 
         for (MarkerResult markerResult : markerResults) {
             Marker marker = createMarker(markerResult);
-            MemoryMarker memoryMarker = new MemoryMarker(marker, memories.size() + 1);
+            MemoryMarker memoryMarker = new MemoryMarker(marker, markerResult.getId());
             memories.add(memoryMarker);
         }
     }
@@ -339,5 +393,39 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         }
 
         return -1;
+    }
+
+    // get the path to save into the database
+    private String getImagePathFromUri(Uri uri) {
+        if (uri == null) {
+            return "";
+        }
+
+        Cursor cursor = main.getContentResolver()
+                .query(uri, null, null, null, null, null);
+        String path;
+
+        if (cursor == null) {
+            path = uri.getPath();
+        }
+        else {
+            cursor.moveToFirst();
+            int index = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+            path = cursor.getString(index);
+        }
+
+        cursor.close();
+        return path;
+    }
+
+    // returns null if no uri is found
+    private Uri getImageURIForMemory(long id) {
+        for (MemoryMarker memory : memories) {
+            if (memory.getId() == id) {
+                return Uri.parse(memory.getImages().get(0));
+            }
+        }
+
+        return null;
     }
 }
