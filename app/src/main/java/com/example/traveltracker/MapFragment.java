@@ -2,7 +2,10 @@ package com.example.traveltracker;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.location.Location;
@@ -17,11 +20,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -29,8 +37,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapFragment extends Fragment implements OnMapReadyCallback {
+public class MapFragment extends Fragment implements OnMapReadyCallback{
     private final String TAG = "MapFragment";
+
+    private final String DEFAULT_MARKER_TITLE = "Give a Title marker here!";
+    private final String DEFAULT_MARKER_SNIPPET = "Whats your story?";
+    private final String MARKER_TITLE_HINT = "Hi, please add your name.";
+    private final String MARKER_SNIPPET_HINT = "Would you mind sharing your story?";
 
     private final int PERMISSION_ACCESS_FINE_LOCATION = 1;
     private final int LOCATION_UPDATE_MIN_DISTANCE = 0;
@@ -41,6 +54,31 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     private DBHelper dbHelper;
     private GoogleMap googleMap;
     private LocationManager locationManager;
+    private MarkerInfoWindowAdapter markerInfoWindowAdapter;
+
+    private LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            Log.d(TAG, "LocationListener.onLocationChanged");
+            // we only need to get the current location once
+            locationManager.removeUpdates(locationListener);
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
     private final List<MemoryMarker> memories = new ArrayList<>();
 
     @Override
@@ -76,44 +114,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         Log.d(TAG, "onMapReady");
         this.googleMap = googleMap;
 
-        this.googleMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+        markerInfoWindowAdapter = new MarkerInfoWindowAdapter(context);
+
+        this.googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
-            public void onMapClick(LatLng position) {
-                MarkerOptions markerOptions = new MarkerOptions()
-                        .position(position)
-                        .snippet("Tap here to remove this marker")
-                        .title("Marker Instance");
-                Marker marker = createMarker(markerOptions);
+            public void onMapLongClick(LatLng position) {
+                createMarker(position);
+                addMarker(position);
+                Marker marker = createMarker(position);
                 MemoryMarker memory = new MemoryMarker(marker, memories.size() + 1);
                 memories.add(memory);
-                addMarker(memory.getLocation());
+                Log.d(TAG, "#memories" + memories.size());
             }
         });
 
         this.googleMap.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            // TODO: there should be a 'are you sure?' warning
             @Override
             public void onInfoWindowClick(Marker marker) {
-                Log.d(TAG, memories.size() + " saved memories");
-
-                if (memories.size() == 0) {
-                    return;
-                }
-
-                String clickId = marker.getId();
-
-                for (MemoryMarker memory : memories) {
-                    if (clickId.equals(memory.markerId())) {
-                        dbHelper.deleteMarker(memory.getId());
-                        // FIXME: marker stays on the map untill the map gets refreshed
-                        marker.remove();
-                        Log.d(TAG, "removed memory #" + memory.getId());
-                        memories.remove(memory);
-                        return;
-                    }
-                }
-
-                Log.d(TAG, "memory not found");
+                openDialog(marker);
             }
         });
 
@@ -125,20 +143,114 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
             askGpsPermission();
         }
 
+        googleMap.setInfoWindowAdapter(markerInfoWindowAdapter);
+        googleMap.setOnMarkerClickListener(markerInfoWindowAdapter);
         showSavedMarkers();
     }
 
-    private final Marker createMarker(MarkerOptions markerOptions) {
+    private void openDialog(final Marker marker) {
+        final Dialog dialog = new Dialog(context);
+        final long memoryId = findMemoryId(marker);
+        dialog.setContentView(R.layout.layout_dialog);
+        dialog.setTitle("Title...");
+
+        Log.d(TAG, "open dialog for memory " + memoryId);
+
+        // set the custom dialog components - text, image and button
+        final EditText editTitle = (EditText) dialog.findViewById(R.id.editTitle);
+        final EditText editSnippet = (EditText) dialog.findViewById(R.id.editSnippet);
+
+        editTitle.setHint(MARKER_TITLE_HINT);
+        editSnippet.setHint(MARKER_SNIPPET_HINT);
+
+        if(!marker.getTitle().equals(DEFAULT_MARKER_TITLE) && !marker.getSnippet().equals(DEFAULT_MARKER_SNIPPET)) {
+            editTitle.setText(marker.getTitle());
+            editSnippet.setText(marker.getSnippet());
+        }
+
+        ImageView imageView = (ImageView) dialog.findViewById(R.id.current_picture);
+        imageView.setImageResource(R.drawable.lion);
+
+        ImageButton dialogButton = (ImageButton) dialog.findViewById(R.id.btnOne);
+        Button  btnSave = (Button) dialog.findViewById(R.id.btnSave);
+
+        // if button is clicked, close the custom dialog
+        dialogButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                //dialog.dismiss();
+                AlertDialog alertDialog = new AlertDialog.Builder(context).create();
+                alertDialog.setTitle("Alert");
+                alertDialog.setMessage("Are you sure to delete this marker ?");
+                alertDialog.setButton(AlertDialog.BUTTON_POSITIVE, "Yes",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface alert_dialog, int which) {
+                                if (memoryId == -1) {
+                                    Log.d(TAG, "id " + memoryId + " doesn't belong to a memory");
+                                    return;
+                                }
+
+                                dbHelper.deleteMarker(memoryId);
+                                marker.remove();
+                                alert_dialog.dismiss();
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No",
+                        new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface alert_dialog, int which) {
+                                alert_dialog.dismiss();
+                                dialog.dismiss();
+                            }
+                        });
+                alertDialog.show();
+            }
+        });
+
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String name = editTitle.getText().toString();
+                String story = editSnippet.getText().toString();
+                marker.setTitle(name);
+                marker.setSnippet(story);
+                if (memoryId != -1) {
+                    dbHelper.updateMarker(memoryId, name, story);
+                }
+
+                dialog.dismiss();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private Marker createMarker(LatLng position) {
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(position)
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons8))
+                .title(DEFAULT_MARKER_TITLE)
+                .snippet(DEFAULT_MARKER_SNIPPET);
+
         return googleMap.addMarker(markerOptions);
     }
 
-    private void placeMarker(LatLng position) {
-        MarkerOptions markerOptions = new MarkerOptions()
-                .position(position)
-                .snippet("Tap here to remove this marker")
-                .title("Marker Instance");
+    private Marker createMarker(MarkerResult markerResult) {
+        googleMap.setInfoWindowAdapter(markerInfoWindowAdapter);
+        googleMap.setOnMarkerClickListener(markerInfoWindowAdapter);
+        String title = markerResult.getTitle();
+        String snippet = markerResult.getSnippet();
 
-        googleMap.addMarker(markerOptions);
+        title = title == null ? DEFAULT_MARKER_TITLE : title;
+        snippet = snippet == null ? DEFAULT_MARKER_SNIPPET :snippet;
+
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(markerResult.getLocation())
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.icons8))
+                .title(title)
+                .snippet(snippet);
+
+        return googleMap.addMarker(markerOptions);
     }
 
     private void addMarker(LatLng position) {
@@ -151,7 +263,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         if (currentLocation != null) {
             LatLng position = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
             moveCamera(position);
-            placeMarker(position);
+            createMarker(position);
         }
     }
 
@@ -200,30 +312,32 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void showSavedMarkers() {
-        List<List<Object>> markerContents = dbHelper.getMarkerContents();
+        List<MarkerResult> markerResults = dbHelper.getMarkers();
 
-        if (markerContents.size() == 0) {
+        if (markerResults.size() == 0) {
             return;
         }
 
-        for (List<Object> markerContent : markerContents) {
-            // 0: id    1: postion    2: title     3: snippet
-            Long id = (Long) markerContent.get(0);
-            LatLng position = (LatLng) markerContent.get(1);
-            String title = (String) markerContent.get(2);
-            String snippet = (String) markerContent.get(3);
-
-            title = title == null ? "Marker instance" : title;
-            snippet = snippet == null ? "Tap here to remove this marker." : snippet;
-
-            MarkerOptions markerOptions = new MarkerOptions()
-                    .position(position)
-                    .snippet(snippet)
-                    .title(title);
-            Marker marker = createMarker(markerOptions);
-            MemoryMarker memory = new MemoryMarker(marker, id);
-            memories.add(memory);
-            placeMarker(memory.getLocation());
+        for (MarkerResult markerResult : markerResults) {
+            Marker marker = createMarker(markerResult);
+            MemoryMarker memoryMarker = new MemoryMarker(marker, memories.size() + 1);
+            memories.add(memoryMarker);
         }
+    }
+
+    // returns -1 if the given marker doesn't have a memory
+    private long findMemoryId(Marker marker) {
+        if (memories.size() == 0) {
+            Log.d(TAG, "memories.size() == 0");
+            return -1;
+        }
+
+        for (MemoryMarker memory : memories) {
+            if (memory.markerEquals(marker)) {
+                return memory.getId();
+            }
+        }
+
+        return -1;
     }
 }

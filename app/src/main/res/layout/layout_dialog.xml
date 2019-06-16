@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#E2E2E2"
+    android:weightSum="100"
+    android:minWidth="700px">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="50"
+        android:weightSum="1"
+        android:orientation="vertical">
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.7"
+        android:id="@+id/current_picture"
+        android:src="@drawable/lion"/>
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.3"
+            android:textAppearance="@android:style/TextAppearance.Small"
+            android:text="Save" />
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="10dp"
+        android:layout_weight="50"
+        android:weightSum="1"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:orientation="horizontal"
+            android:layout_weight="0.2"
+            android:weightSum="1">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.7"/>
+
+            <ImageButton
+                android:id="@+id/btnOne"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:scaleType="center"
+                android:layout_weight="0.3"
+                android:src="@drawable/ic_remove_circle_black_24dp" />
+
+
+        </LinearLayout>
+
+        <EditText
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:id="@+id/editTitle"
+            android:focusableInTouchMode="true"
+            android:gravity="center"
+            android:layout_marginBottom="10dp"
+            android:textColor="#000"
+            android:layout_weight="0.2"
+            android:background="@android:color/transparent"
+            />
+
+        <EditText
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="10dp"
+            android:id="@+id/editSnippet"
+            android:focusableInTouchMode="true"
+            android:layout_weight="0.6"
+            android:gravity="center"
+            android:textColor="#000"
+            android:background="@android:color/transparent"/>
+
+
+
+
+    </LinearLayout>
+
+
+</LinearLayout>

@@ -47,7 +47,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.d(TAG, "addMarker #" + id);
     }
 
-    public List<List<Object>> getMarkerContents() {
+    public List<MarkerResult> getMarkers() {
         SQLiteDatabase db = getReadableDatabase();
 
         String[] projection = {
@@ -68,7 +68,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 null
         );
 
-        List<List<Object>> memories = new ArrayList<>();
+        List<MarkerResult> memories = new ArrayList<>();
 
         if (cursor.moveToFirst()) {
             do {
@@ -90,11 +90,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         cursor.getColumnIndex(MarkerContract.Entries.COLUMN_SNIPPET)
                 );
 
-                values.add(id);
-                values.add(new LatLng(latitude, longitude));
-                values.add(title);
-                values.add(snippet);
-                memories.add(values);
+                memories.add(new MarkerResult(id, title, snippet, new LatLng(latitude, longitude)));
             } while (cursor.moveToNext());
         }
 
@@ -115,5 +111,26 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(MemoryContract.Entries.COLUMN_MARKER_ID, markerId);
         values.put(MemoryContract.Entries.COLUMN_IMAGE, imageName);
         return db.insert(MemoryContract.Entries.TABLE_NAME, null, values) == 1;
+    }
+
+    public boolean updateMarker(long id, String title, String snippet) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(MarkerContract.Entries.COLUMN_TITLE, title);
+        values.put(MarkerContract.Entries.COLUMN_SNIPPET, snippet);
+        String whereClause = MarkerContract.Entries._ID + " = ?";
+        String[] whereArgs = { Long.toString(id) };
+        return db.update(MarkerContract.Entries.TABLE_NAME, values, whereClause, whereArgs) == 1;
+    }
+
+    public boolean updateMarker(long id, String title, String snippet, String image) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(MarkerContract.Entries.COLUMN_TITLE, title);
+        values.put(MarkerContract.Entries.COLUMN_SNIPPET, snippet);
+        values.put(MarkerContract.Entries.COLUMN_IMAGE, image);
+        String whereClause = MarkerContract.Entries._ID + " = ?";
+        String[] whereArgs = { Long.toString(id) };
+        return db.update(MarkerContract.Entries.TABLE_NAME, values, whereClause, whereArgs) == 1;
     }
 }
