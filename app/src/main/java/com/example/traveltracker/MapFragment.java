@@ -182,6 +182,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         final Dialog dialog = new Dialog(context);
         final long memoryId = findMemoryId(marker);
 
+        // assume when memoryId equals -1, the current location marker is clicked
+        if (memoryId == -1) {
+            return;
+        }
+
         dialog.setContentView(R.layout.layout_dialog);
         dialog.setTitle("Title...");
 
@@ -317,7 +322,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         if (currentLocation != null) {
             LatLng position = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
             moveCamera(position);
-            createMarker(position);
+            // show a standard marker for the current location
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(position)
+                    .title("You are here");
+            googleMap.addMarker(markerOptions);
         }
     }
 
