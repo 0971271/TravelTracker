@@ -317,7 +317,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         if (currentLocation != null) {
             LatLng position = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
             moveCamera(position);
-            createMarker(position);
+            // show a standard marker for the current location
+            MarkerOptions markerOptions = new MarkerOptions()
+                    .position(position)
+                    .title("You are here");
+            googleMap.addMarker(markerOptions);
         }
     }
 
