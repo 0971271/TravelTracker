@@ -182,6 +182,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback{
         final Dialog dialog = new Dialog(context);
         final long memoryId = findMemoryId(marker);
 
+        // assume when memoryId equals -1, the current location marker is clicked
+        if (memoryId == -1) {
+            return;
+        }
+
         dialog.setContentView(R.layout.layout_dialog);
         dialog.setTitle("Title...");
 
